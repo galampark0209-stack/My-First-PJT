@@ -62,9 +62,14 @@ uploaded_file = st.file_uploader("데이터 업데이트를 위해 엑셀 파일
 node_positions = [14.28, 28.57, 42.85, 57.14, 71.42, 85.71]
 
 # 그리드 및 노드 렌더링
-grid_html = '<div class="grid-container">'
-for _ in range(14):
-    grid_html += '<div class="grid-item"></div>'
+grid_html += f"""
+<div class="node" style="left: {x_pos}%; top: 50%;">
+    <b style="font-size:12px;">{row['장치장']}</b>
+    <span>{row['곡종']}</span>
+    <div style="border-top:1px solid #fff; width:60%; margin:3px 0;"></div>
+    <b>{row['재고량']:.1f}</b>
+</div>
+"""
 
 # 데이터 매핑 로직
 df = None
