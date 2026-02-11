@@ -2,102 +2,97 @@ import streamlit as st
 import pandas as pd
 import io
 
-# 1. 페이지 설정 및 다크 테마 적용
-st.set_page_config(page_title="실시간 재고현황 시스템", layout="wide")
+# 1. 페이지 설정
+st.set_page_config(page_title="공정별 재고현황 시스템", layout="wide")
 
-# 고사양 UI를 위한 CSS 커스텀
+# 고사양 산업용 UI CSS
 st.markdown("""
 <style>
     .stApp { background-color: #0e1117; color: #ffffff; }
-    .grid-container {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        grid-template-rows: repeat(2, 220px);
-        gap: 0px;
+    .main-container {
         position: relative;
+        width: 90%;
+        margin: 50px auto;
         background-color: #1a1c24;
         border: 2px solid #3e4452;
-        margin: 100px auto;
-        width: 90%;
-        box-shadow: 0px 0px 20px rgba(0,0,0,0.5);
+        padding: 40px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 80px; /* 행 간격 */
     }
-    .grid-item { border: 1px solid #2d3139; position: relative; }
-    .node {
-        position: absolute;
-        width: 95px;
-        height: 95px;
-        background: radial-gradient(circle, #2c3e50 0%, #000000 100%);
-        border: 3px solid #00d4ff;
-        border-radius: 50%;
-        color: #00d4ff;
+    .row {
+        position: relative;
+        width: 100%;
+        height: 100px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    /* 7개 사각형 그리드 행 스타일 */
+    .grid-row {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        width: 100%;
+        border-top: 1px solid #3e4452;
+        border-bottom: 1px solid #3e4452;
+    }
+    .grid-cell {
+        height: 100px;
+        border-left: 1px solid #3e4452;
+        border-right: 1px solid #3e4452;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        font-size: 11px;
-        text-align: center;
+    }
+    /* 원형 노드 스타일 */
+    .node-circle {
+        position: absolute;
+        width: 85px;
+        height: 85px;
+        background: radial-gradient(circle, #2c3e50 0%, #000000 100%);
+        border: 3px solid #00d4ff;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         z-index: 10;
-        transform: translate(-50%, -50%);
-        box-shadow: 0px 0px 15px rgba(0, 212, 255, 0.6);
-        font-weight: bold;
+        box-shadow: 0px 0px 15px rgba(0, 212, 255, 0.5);
+        transform: translateY(-50%);
     }
-    .node-placeholder {
-        background: #1a1c24;
-        color: #4b5563;
-        border: 2px dashed #3e4452;
-        box-shadow: none;
+    /* 사각형 내 텍스트 스타일 */
+    .node-square {
+        width: 90%;
+        height: 80%;
+        background-color: #262a33;
+        border: 2px solid #ffeb3b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
     }
-    .node b { color: #ffffff; font-size: 13px; }
-    .node .qty { color: #ffeb3b; font-size: 14px; }
+    .addr { color: #ffffff; font-size: 11px; font-weight: bold; }
+    .grain { color: #00d4ff; font-size: 9px; }
+    .qty { color: #ffeb3b; font-size: 12px; font-weight: bold; }
+    .off { color: #4b5563; font-size: 10px; border-color: #3e4452 !important; background: transparent !important; }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🚀 일일 장치장별 & 곡종별 재고현황 시스템")
+st.title("🚀 일일 장치장별 & 곡종별 재고현황 (Advanced 5-Row Layout)")
 
-# 2. 사이드바 데이터 입력
-st.sidebar.markdown("### 🛠️ DATA CONTROL")
-raw_data = st.sidebar.text_area(
-    "데이터를 붙여넣으세요 (장치장 곡종 재고량)",
-    placeholder="예시:\nSilo-01  강력분  450.5\nSilo-02  중력분  230.0",
-    height=400
-)
+# 2. 데이터 입력
+st.sidebar.markdown("### 📋 데이터 입력 (Copy & Paste)")
+raw_data = st.sidebar.text_area("주소 곡종 재고량", placeholder="A101 강력분 100.5", height=400)
 
-# 데이터 파싱
-df = None
+data_dict = {}
 if raw_data.strip():
     try:
-        df = pd.read_csv(io.StringIO(raw_data), sep=r'\s+', names=['장치장', '곡종', '재고량'])
-        st.sidebar.success(f"✅ {len(df)} Nodes Active")
-    except Exception as e:
-        st.sidebar.error("데이터 형식을 확인해주세요.")
-
-# 3. 레이아웃 렌더링
-y_positions = [0, 50, 100]
-x_positions = [14.28, 28.57, 42.85, 57.14, 71.42, 85.71]
-
-grid_html = '<div class="grid-container">'
-for _ in range(14):
-    grid_html += '<div class="grid-item"></div>'
-
-node_count = 0
-for y_pos in y_positions:
-    for x_pos in x_positions:
-        if df is not None and node_count < len(df):
-            try:
-                v_loc = str(df.iloc[node_count]['장치장'])
-                v_grain = str(df.iloc[node_count]['곡종'])
-                v_qty = float(df.iloc[node_count]['재고량'])
-                
-                grid_html += f'<div class="node" style="left: {x_pos}%; top: {y_pos}%;">'
-                grid_html += f'<b>{v_loc}</b>'
-                grid_html += f'<span style="font-size:9px;">{v_grain}</span>'
-                grid_html += f'<div style="border-top:1px solid #00d4ff; width:60%; margin:4px 0;"></div>'
-                grid_html += f'<span class="qty">{v_qty:,.1f}</span></div>'
-            except:
-                grid_html += f'<div class="node node-placeholder" style="left: {x_pos}%; top: {y_pos}%;">ERR</div>'
-        else:
-            grid_html += f'<div class="node node-placeholder" style="left: {x_pos}%; top: {y_pos}%;">OFFLINE</div>'
-        node_count += 1
-
-grid_html += '</div>'
-st.markdown(grid_html, unsafe_allow_html=True)
+        lines = raw_data.strip().split('\n')
+        for line in lines:
+            parts = line.split()
+            if len(parts) >= 3:
+                data_dict[parts[0]] = {"grain": parts[1], "qty": float(parts[2])}
+        st.sidebar.success(f"✅ {len(data_dict)}개 데이터 매핑됨")
+    except:
+        st.sidebar.error("형식을 확인해주세요 (주
