@@ -10,7 +10,6 @@ st.markdown("""
     .stApp { background-color: #0e1117; color: #ffffff; }
     .grid-wrapper { position: relative; width: 100%; margin-top: 60px; display: flex; flex-direction: column; }
     
-    /* 격자 배경색을 약간 더 밝게 조정 */
     .grid-bg {
         display: grid; grid-template-columns: repeat(7, 1fr);
         grid-template-rows: repeat(2, 200px);
@@ -20,7 +19,6 @@ st.markdown("""
     
     .node-base { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; z-index: 10; overflow: hidden; }
     
-    /* 노드 내부 배경을 어둡게 하여 Filling을 강조 */
     .circle {
         position: absolute; width: 85px; height: 85px;
         background-color: #000000; border: 3px solid #00d4ff; border-radius: 50%;
@@ -28,10 +26,9 @@ st.markdown("""
     }
     .square { width: 90%; height: 85%; background-color: #000000; border: 2px solid #ffeb3b; }
     
-    /* Filling 색상: 더 밝고 선명한 회색으로 변경 */
     .gauge-fill {
         position: absolute; bottom: 0; left: 0; width: 100%; 
-        background-color: rgba(220, 220, 220, 0.5); /* 밝은 실버 그레이, 불투명도 증가 */
+        background-color: rgba(220, 220, 220, 0.5);
         z-index: -1;
     }
 
@@ -74,7 +71,10 @@ with col_left:
     def draw_node(addr, is_circle=True, x=0, y=0):
         val = data_dict.get(addr)
         cls = "circle" if is_circle else "square"
+        
+        # 람님의 요청에 따른 정확한 최대값 설정
         max_cap = 500 if is_circle else 2000
+        
         pos = f"left:{x}%; top:{y}%;" if is_circle else ""
         if val:
             current_q = val['q']
