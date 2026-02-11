@@ -1,9 +1,11 @@
 import streamlit as st
 import pandas as pd
+import io
 
+# 1. 페이지 설정
 st.set_page_config(page_title="일일 재고현황 시스템", layout="wide")
 
-# CSS 스타일: 3개 행의 노드를 배치하기 위한 설정
+# CSS 스타일 (3개 행 노드 배치)
 st.markdown("""
 <style>
     .grid-container {
@@ -40,31 +42,37 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.title("📊 일일 장치장별&곡종별 재고현황 (3-Row Layout)")
+st.title("📊 일일 장치장별&곡종별 재고현황")
 
-uploaded_file = st.file_uploader("엑셀 파일을 업로드하세요", type=['xlsx'])
+# 2. 데이터 입력 섹션 (보안을 고려한 Text Area 방식)
+st.sidebar.header("📋 데이터 입력")
+raw_data = st.sidebar.text_area(
+    "엑셀 데이터를 복사해서 아래에 붙여넣으세요:",
+    placeholder="예시:\n장치장1  밀가루  150.5\n장치장2  호밀    80.0",
+    height=300
+)
 
-# 3개 행(상, 중, 하)의 Y축 위치 (%)
-y_positions = [0, 50, 100]
-# 가로 6개 접점의 X축 위치 (%)
-x_positions = [14.28, 28.57, 42.85, 57.14, 71.42, 85.71]
+# 3. 데이터 파싱 로직
+df = None
+if raw_data.strip():
+    try:
+        # 공백이나 탭으로 구분된 텍스트를 데이터프레임으로 읽어옴
+        df = pd.read_csv(io.StringIO(raw_data), sep=r'\s+', names=['장치장', '곡종', '재고량'])
+        st.sidebar.success(f"{len(df)}개의 데이터가 로드되었습니다.")
+    except Exception as e:
+        st.sidebar.error(f"데이터 형식 오류: {e}")
+
+# 4. 레이아웃 렌더링
+y_positions = [0, 50, 100] # 상, 중, 하 3행
+x_positions = [14.28, 28.57, 42.85, 57.14, 71.42, 85.71] # 가로 6개 접점
 
 grid_html = '<div class="grid-container">'
 for _ in range(14):
     grid_html += '<div class="grid-item"></div>'
 
-df = None
-if uploaded_file:
-    try:
-        df = pd.read_excel(uploaded_file)
-    except Exception as e:
-        st.error(f"Error: {e}")
-
-# 3개 행 x 6개 열 = 총 18개 노드 생성 로직
 node_count = 0
-for y_idx, y_pos in enumerate(y_positions):
-    for x_idx, x_pos in enumerate(x_positions):
-        # 데이터 매핑 (18개까지 지원)
+for y_pos in y_positions:
+    for x_pos in x_positions:
         if df is not None and node_count < len(df):
             try:
                 v_loc = str(df.iloc[node_count]['장치장'])
@@ -79,7 +87,6 @@ for y_idx, y_pos in enumerate(y_positions):
                 grid_html += f'<div class="node node-placeholder" style="left: {x_pos}%; top: {y_pos}%;">Err</div>'
         else:
             grid_html += f'<div class="node node-placeholder" style="left: {x_pos}%; top: {y_pos}%;">대기중</div>'
-        
         node_count += 1
 
 grid_html += '</div>'
