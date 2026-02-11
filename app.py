@@ -3,9 +3,9 @@ import pandas as pd
 import io
 
 # 1. 페이지 설정
-st.set_page_config(page_title="공정별 재고현황 시스템", layout="wide")
+st.set_page_config(page_title="일일 재고현황 시스템", layout="wide")
 
-# 고사양 산업용 UI CSS
+# CSS 커스텀 (5개 행 레이아웃)
 st.markdown("""
 <style>
     .stApp { background-color: #0e1117; color: #ffffff; }
@@ -18,7 +18,7 @@ st.markdown("""
         padding: 40px 0;
         display: flex;
         flex-direction: column;
-        gap: 80px; /* 행 간격 */
+        gap: 80px;
     }
     .row {
         position: relative;
@@ -28,7 +28,6 @@ st.markdown("""
         justify-content: center;
         align-items: center;
     }
-    /* 7개 사각형 그리드 행 스타일 */
     .grid-row {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
@@ -45,7 +44,6 @@ st.markdown("""
         align-items: center;
         justify-content: center;
     }
-    /* 원형 노드 스타일 */
     .node-circle {
         position: absolute;
         width: 85px;
@@ -61,7 +59,6 @@ st.markdown("""
         box-shadow: 0px 0px 15px rgba(0, 212, 255, 0.5);
         transform: translateY(-50%);
     }
-    /* 사각형 내 텍스트 스타일 */
     .node-square {
         width: 90%;
         height: 80%;
@@ -79,10 +76,10 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🚀 일일 장치장별 & 곡종별 재고현황 (Advanced 5-Row Layout)")
+st.title("🚀 일일 장치장별 & 곡종별 재고현황 시스템")
 
-# 2. 데이터 입력
-st.sidebar.markdown("### 📋 데이터 입력 (Copy & Paste)")
+# 2. 데이터 입력 섹션
+st.sidebar.markdown("### 📋 DATA INPUT")
 raw_data = st.sidebar.text_area("주소 곡종 재고량", placeholder="A101 강력분 100.5", height=400)
 
 data_dict = {}
@@ -93,6 +90,4 @@ if raw_data.strip():
             parts = line.split()
             if len(parts) >= 3:
                 data_dict[parts[0]] = {"grain": parts[1], "qty": float(parts[2])}
-        st.sidebar.success(f"✅ {len(data_dict)}개 데이터 매핑됨")
-    except:
-        st.sidebar.error("형식을 확인해주세요 (주
+        st.
