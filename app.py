@@ -65,7 +65,7 @@ with col_left:
     def draw_node(addr, is_circle=True, x=0, y=0):
         val = data_dict.get(addr)
         cls = "circle" if is_circle else "square"
-        max_cap = 500 if is_circle else 2000
+        max_cap = 2000 if is_circle else 500
         pos = f"left:{x}%; top:{y}%;" if is_circle else ""
         if val:
             # 에러 발생 지점 수정: 수식을 짧게 쪼개어 안전하게 작성
