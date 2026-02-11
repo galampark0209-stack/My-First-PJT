@@ -4,33 +4,42 @@ import pandas as pd
 # 1. 페이지 설정
 st.set_page_config(page_title="일일 재고현황 시스템", layout="wide")
 
-# CSS: 다크 테마 및 레벨 게이지 시각화
+# CSS: 대비를 강조한 색상 설정
 st.markdown("""
 <style>
     .stApp { background-color: #0e1117; color: #ffffff; }
     .grid-wrapper { position: relative; width: 100%; margin-top: 60px; display: flex; flex-direction: column; }
+    
+    /* 격자 배경색을 약간 더 밝게 조정 */
     .grid-bg {
         display: grid; grid-template-columns: repeat(7, 1fr);
         grid-template-rows: repeat(2, 200px);
-        width: 100%; border: 1px solid #3e4452; background-color: #1a1c24; position: relative;
+        width: 100%; border: 1px solid #4a5568; background-color: #1e222b; position: relative;
     }
     .grid-item { border: 1px solid #2d3139; display: flex; align-items: center; justify-content: center; position: relative; }
+    
     .node-base { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; z-index: 10; overflow: hidden; }
+    
+    /* 노드 내부 배경을 어둡게 하여 Filling을 강조 */
     .circle {
         position: absolute; width: 85px; height: 85px;
-        background-color: #000; border: 3px solid #00d4ff; border-radius: 50%;
+        background-color: #000000; border: 3px solid #00d4ff; border-radius: 50%;
         transform: translate(-50%, -50%); box-shadow: 0px 0px 10px rgba(0, 212, 255, 0.4);
     }
-    .square { width: 90%; height: 85%; background-color: #000; border: 2px solid #ffeb3b; }
+    .square { width: 90%; height: 85%; background-color: #000000; border: 2px solid #ffeb3b; }
+    
+    /* Filling 색상: 더 밝고 선명한 회색으로 변경 */
     .gauge-fill {
         position: absolute; bottom: 0; left: 0; width: 100%; 
-        background-color: rgba(255, 165, 0, 0.2);
+        background-color: rgba(220, 220, 220, 0.5); /* 밝은 실버 그레이, 불투명도 증가 */
         z-index: -1;
     }
+
     .addr { font-size: 10px; font-weight: bold; color: #ffffff; z-index: 2; }
     .grain-txt { font-size: 8px; color: #00d4ff; z-index: 2; }
     .qty-txt { font-size: 11px; font-weight: bold; color: #ffeb3b; z-index: 2; }
     .off { border: 1px dashed #444 !important; background: transparent !important; color: #444 !important; }
+
     .summary-card {
         background-color: #1a1c24; border: 1px solid #3e4452;
         padding: 6px 10px; border-radius: 4px; margin-bottom: 5px;
@@ -65,10 +74,9 @@ with col_left:
     def draw_node(addr, is_circle=True, x=0, y=0):
         val = data_dict.get(addr)
         cls = "circle" if is_circle else "square"
-        max_cap = 2000 if is_circle else 500
+        max_cap = 500 if is_circle else 2000
         pos = f"left:{x}%; top:{y}%;" if is_circle else ""
         if val:
-            # 에러 발생 지점 수정: 수식을 짧게 쪼개어 안전하게 작성
             current_q = val['q']
             ratio = current_q / max_cap
             pct = min(100, ratio * 100)
