@@ -33,7 +33,7 @@ st.markdown("""
     .off { border: 1px dashed #444 !important; background: transparent !important; color: #444 !important; }
     .summary-card {
         background-color: #1a1c24; border: 1px solid #3e4452;
-        padding: 8px 12px; border-radius: 4px; margin-bottom: 6px;
+        padding: 6px 10px; border-radius: 4px; margin-bottom: 5px;
         border-left: 3px solid #00d4ff;
     }
 </style>
@@ -52,8 +52,8 @@ if raw_data.strip():
         p = line.split()
         if len(p) >= 3:
             try:
-                addr, grain, qty_str = p[0], p[1], p[2].replace(',', '')
-                qty = float(qty_str)
+                addr, grain = p[0], p[1]
+                qty = float(p[2].replace(',', ''))
                 data_dict[addr] = {"g": grain, "q": qty}
                 summary_dict[grain] = summary_dict.get(grain, 0) + qty
             except: continue
@@ -62,11 +62,38 @@ if raw_data.strip():
 col_left, col_right = st.columns([8, 2])
 
 with col_left:
-    st.subheader("📍 실시간 재고 레벨 맵")
     def draw_node(addr, is_circle=True, x=0, y=0):
         val = data_dict.get(addr)
         cls = "circle" if is_circle else "square"
         max_cap = 500 if is_circle else 2000
         pos = f"left:{x}%; top:{y}%;" if is_circle else ""
         if val:
-            percent = min(100, (val['
+            # 에러 발생 지점 수정: 수식을 짧게 쪼개어 안전하게 작성
+            current_q = val['q']
+            ratio = current_q / max_cap
+            pct = min(100, ratio * 100)
+            fill_html = f'<div class="gauge-fill" style="height:{pct}%;"></div>'
+            return f'<div class="node-base {cls}" style="{pos}">{fill_html}<span class="addr">{addr}</span><span class="grain-txt">{val["g"]}</span><span class="qty-txt">{current_q:,.0f}</span></div>'
+        return f'<div class="node-base {cls} off" style="{pos}"><span class="addr">{addr}</span></div>'
+
+    x_pts = [14.28, 28.57, 42.85, 57.14, 71.42, 85.71]
+    html = '<div class="grid-wrapper"><div class="grid-bg">'
+    for r_idx in [2, 4]:
+        for c_idx in range(1, 8):
+            html += f'<div class="grid-item">{draw_node(f"A{r_idx}0{c_idx}", False)}</div>'
+    y_map = {1: 0, 3: 50, 5: 100}
+    for r, y in y_map.items():
+        for i, x in enumerate(x_pts):
+            html += draw_node(f"A{r}0{i+1}", True, x, y)
+    html += '</div></div>'
+    st.markdown(html, unsafe_allow_html=True)
+
+with col_right:
+    st.subheader("📊 요약 [M/T]")
+    if summary_dict:
+        sorted_summary = sorted(summary_dict.items(), key=lambda x: x[1], reverse=True)
+        for g, q in sorted_summary:
+            summary_html = f'<div class="summary-card"><div style="font-size:10px; color:#00d4ff;">{g}</div><div style="font-size:14px; font-weight:bold; color:#ffeb3b;">{q:,.1f}</div></div>'
+            st.markdown(summary_html, unsafe_allow_html=True)
+    else:
+        st.info("No Data")
