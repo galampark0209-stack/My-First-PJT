@@ -90,4 +90,54 @@ if raw_data.strip():
             parts = line.split()
             if len(parts) >= 3:
                 data_dict[parts[0]] = {"grain": parts[1], "qty": float(parts[2])}
-        st.
+        # 에러가 났던 지점: 문장을 단순화하여 한 줄에 배치함
+        st.sidebar.success("Success")
+    except:
+        st.sidebar.error("Error")
+
+# 3. 노드 렌더링 함수
+def render_node(addr, is_circle=True):
+    content = data_dict.get(addr)
+    style_class = "node-circle" if is_circle else "node-square"
+    if content:
+        return f'<div class="{style_class}"><span class="addr">{addr}</span><span class="grain">{content["grain"]}</span><div style="border-top:1px solid #555; width:60%; margin:2px 0;"></div><span class="qty">{content["qty"]:,.1f}</span></div>'
+    return f'<div class="{style_class} off"><span class="addr">{addr}</span><span style="font-size:8px;">OFFLINE</span></div>'
+
+# 4. 레이아웃 생성
+html = '<div class="main-container">'
+
+# 1행 (A101-106 원형)
+html += '<div class="row">'
+for i in range(1, 7):
+    x_pos = i * (100 / 7)
+    html += f'<div style="position:absolute; left:{x_pos}%; top:50%;">{render_node(f"A10{i}")}</div>'
+html += '</div>'
+
+# 2행 (A201-207 사각형)
+html += '<div class="row grid-row">'
+for i in range(1, 8):
+    html += f'<div class="grid-cell">{render_node(f"A20{i}", False)}</div>'
+html += '</div>'
+
+# 3행 (A301-306 원형)
+html += '<div class="row">'
+for i in range(1, 7):
+    x_pos = i * (100 / 7)
+    html += f'<div style="position:absolute; left:{x_pos}%; top:50%;">{render_node(f"A30{i}")}</div>'
+html += '</div>'
+
+# 4행 (A401-407 사각형)
+html += '<div class="row grid-row">'
+for i in range(1, 8):
+    html += f'<div class="grid-cell">{render_node(f"A40{i}", False)}</div>'
+html += '</div>'
+
+# 5행 (A501-506 원형)
+html += '<div class="row">'
+for i in range(1, 7):
+    x_pos = i * (100 / 7)
+    html += f'<div style="position:absolute; left:{x_pos}%; top:50%;">{render_node(f"A50{i}")}</div>'
+html += '</div>'
+
+html += '</div>'
+st.markdown(html, unsafe_allow_html=True)
