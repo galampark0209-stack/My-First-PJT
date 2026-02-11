@@ -5,139 +5,92 @@ import io
 # 1. 페이지 설정
 st.set_page_config(page_title="일일 재고현황 시스템", layout="wide")
 
-# CSS 커스텀 (5개 행 레이아웃)
+# 다크 테마 및 격자/노드 CSS
 st.markdown("""
 <style>
     .stApp { background-color: #0e1117; color: #ffffff; }
-    .main-container {
-        position: relative;
-        width: 90%;
-        margin: 50px auto;
-        background-color: #1a1c24;
-        border: 2px solid #3e4452;
-        padding: 40px 0;
-        display: flex;
-        flex-direction: column;
-        gap: 80px;
-    }
-    .row {
-        position: relative;
-        width: 100%;
-        height: 100px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    .grid-row {
+    .grid-container {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
-        width: 100%;
-        border-top: 1px solid #3e4452;
-        border-bottom: 1px solid #3e4452;
+        grid-template-rows: repeat(2, 200px);
+        gap: 0px;
+        position: relative;
+        background-color: #1a1c24;
+        border: 1px solid #3e4452;
+        margin: 80px auto;
+        width: 85%;
     }
-    .grid-cell {
-        height: 100px;
-        border-left: 1px solid #3e4452;
-        border-right: 1px solid #3e4452;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-    }
-    .node-circle {
+    .grid-item { border: 1px solid #2d3139; position: relative; }
+    .node {
         position: absolute;
         width: 85px;
         height: 85px;
         background: radial-gradient(circle, #2c3e50 0%, #000000 100%);
         border: 3px solid #00d4ff;
         border-radius: 50%;
+        color: #ffffff;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        z-index: 10;
-        box-shadow: 0px 0px 15px rgba(0, 212, 255, 0.5);
-        transform: translateY(-50%);
+        font-size: 10px;
+        z-index: 20;
+        transform: translate(-50%, -50%);
+        box-shadow: 0px 0px 12px rgba(0, 212, 255, 0.6);
     }
-    .node-square {
-        width: 90%;
-        height: 80%;
-        background-color: #262a33;
-        border: 2px solid #ffeb3b;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-    }
-    .addr { color: #ffffff; font-size: 11px; font-weight: bold; }
-    .grain { color: #00d4ff; font-size: 9px; }
-    .qty { color: #ffeb3b; font-size: 12px; font-weight: bold; }
-    .off { color: #4b5563; font-size: 10px; border-color: #3e4452 !important; background: transparent !important; }
+    .node-off { border: 2px dashed #3e4452; background: #1a1c24; color: #4b5563; box-shadow: none; }
+    .qty { color: #ffeb3b; font-weight: bold; font-size: 12px; }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🚀 일일 장치장별 & 곡종별 재고현황 시스템")
+st.title("📊 일일 장치장별 & 곡종별 재고현황")
 
-# 2. 데이터 입력 섹션
-st.sidebar.markdown("### 📋 DATA INPUT")
-raw_data = st.sidebar.text_area("주소 곡종 재고량", placeholder="A101 강력분 100.5", height=400)
+# 2. 데이터 입력
+st.sidebar.markdown("### 📋 데이터 입력")
+raw_data = st.sidebar.text_area("주소 곡종 재고량", placeholder="A101 강력분 150.0", height=400)
 
 data_dict = {}
 if raw_data.strip():
     try:
-        lines = raw_data.strip().split('\n')
-        for line in lines:
+        for line in raw_data.strip().split('\n'):
             parts = line.split()
             if len(parts) >= 3:
                 data_dict[parts[0]] = {"grain": parts[1], "qty": float(parts[2])}
-        # 에러가 났던 지점: 문장을 단순화하여 한 줄에 배치함
-        st.sidebar.success("Success")
+        st.sidebar.success("데이터 로드 완료")
     except:
-        st.sidebar.error("Error")
+        st.sidebar.error("형식 오류")
 
-# 3. 노드 렌더링 함수
-def render_node(addr, is_circle=True):
-    content = data_dict.get(addr)
-    style_class = "node-circle" if is_circle else "node-square"
-    if content:
-        return f'<div class="{style_class}"><span class="addr">{addr}</span><span class="grain">{content["grain"]}</span><div style="border-top:1px solid #555; width:60%; margin:2px 0;"></div><span class="qty">{content["qty"]:,.1f}</span></div>'
-    return f'<div class="{style_class} off"><span class="addr">{addr}</span><span style="font-size:8px;">OFFLINE</span></div>'
+# 3. 주소 리스트 정의 (3행 x 6열 = 18개)
+address_map = [
+    ["A101", "A102", "A103", "A104", "A105", "A106"], # 상단 라인
+    ["A201", "A202", "A203", "A204", "A205", "A206"], # 중간 라인 (원래 7개였으나 6개 접점으로 통일)
+    ["A301", "A302", "A303", "A304", "A305", "A306"]  # 하단 라인 (A501 등은 람님의 필요에 따라 수정 가능)
+]
+# 만약 A501까지 5개 층이 필요하다면 y_positions를 늘리면 됩니다. 
+# 일단 텍스트 아트의 2행 격자 구조(3개 가로선)에 맞췄습니다.
 
-# 4. 레이아웃 생성
-html = '<div class="main-container">'
+y_positions = [0, 50, 100] # 상, 중, 하 가로선 위치
+x_positions = [14.28, 28.57, 42.85, 57.14, 71.42, 85.71] # 세로선 교차점
 
-# 1행 (A101-106 원형)
-html += '<div class="row">'
-for i in range(1, 7):
-    x_pos = i * (100 / 7)
-    html += f'<div style="position:absolute; left:{x_pos}%; top:50%;">{render_node(f"A10{i}")}</div>'
-html += '</div>'
+grid_html = '<div class="grid-container">'
+for _ in range(14): # 7x2 배경 격자
+    grid_html += '<div class="grid-item"></div>'
 
-# 2행 (A201-207 사각형)
-html += '<div class="row grid-row">'
-for i in range(1, 8):
-    html += f'<div class="grid-cell">{render_node(f"A20{i}", False)}</div>'
-html += '</div>'
+for r_idx, y_pos in enumerate(y_positions):
+    for c_idx, x_pos in enumerate(x_positions):
+        addr = address_map[r_idx][c_idx]
+        info = data_dict.get(addr)
+        
+        if info:
+            grid_html += f"""
+            <div class="node" style="left:{x_pos}%; top:{y_pos}%;">
+                <span style="font-weight:bold;">{addr}</span>
+                <span style="font-size:9px;">{info['grain']}</span>
+                <div style="border-top:1px solid #00d4ff; width:60%; margin:2px 0;"></div>
+                <span class="qty">{info['qty']:,.1f}</span>
+            </div>"""
+        else:
+            grid_html += f'<div class="node node-off" style="left:{x_pos}%; top:{y_pos}%;">{addr}</div>'
 
-# 3행 (A301-306 원형)
-html += '<div class="row">'
-for i in range(1, 7):
-    x_pos = i * (100 / 7)
-    html += f'<div style="position:absolute; left:{x_pos}%; top:50%;">{render_node(f"A30{i}")}</div>'
-html += '</div>'
-
-# 4행 (A401-407 사각형)
-html += '<div class="row grid-row">'
-for i in range(1, 8):
-    html += f'<div class="grid-cell">{render_node(f"A40{i}", False)}</div>'
-html += '</div>'
-
-# 5행 (A501-506 원형)
-html += '<div class="row">'
-for i in range(1, 7):
-    x_pos = i * (100 / 7)
-    html += f'<div style="position:absolute; left:{x_pos}%; top:50%;">{render_node(f"A50{i}")}</div>'
-html += '</div>'
-
-html += '</div>'
-st.markdown(html, unsafe_allow_html=True)
+grid_html += '</div>'
+st.markdown(grid_html, unsafe_allow_html=True)
