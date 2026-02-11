@@ -24,7 +24,7 @@ st.markdown("""
     .square { width: 90%; height: 85%; background-color: #000; border: 2px solid #ffeb3b; }
     .gauge-fill {
         position: absolute; bottom: 0; left: 0; width: 100%; 
-        background-color: rgba(200, 200, 200, 0.2);
+        background-color: rgba(255, 165, 0, 0.2);
         z-index: -1;
     }
     .addr { font-size: 10px; font-weight: bold; color: #ffffff; z-index: 2; }
