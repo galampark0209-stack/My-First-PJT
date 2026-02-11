@@ -1,10 +1,10 @@
 import streamlit as st
 import pandas as pd
 
-# 1. 페이지 설정 및 제목 변경
+# 1. 페이지 설정 및 제목
 st.set_page_config(page_title="일일 재고현황 시스템", layout="wide")
 
-# CSS 스타일 (그리드 및 원형 노드 디자인 고정)
+# 2. CSS 스타일 정의 (그리드 및 원형 노드 디자인)
 st.markdown("""
 <style>
     .grid-container {
@@ -49,40 +49,32 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 요구하신 제목으로 변경
 st.title("📊 일일 장치장별&곡종별 재고현황")
 
-# 사이드바 진행도
+# 사이드바 설정
 st.sidebar.write("### 🏁 개발 진행도: 100%")
 st.sidebar.progress(100)
 
+# 파일 업로드 위젯
 uploaded_file = st.file_uploader("데이터 업데이트를 위해 엑셀 파일을 선택하세요", type=['xlsx'])
 
-# 7x2 그리드 내 6개의 접점 좌표 (좌측부터의 백분율)
+# 7x2 그리드 내의 6개 접점 (가로 위치 % 좌표)
 node_positions = [14.28, 28.57, 42.85, 57.14, 71.42, 85.71]
 
-# 그리드 및 노드 렌더링
-grid_html += f"""
-<div class="node" style="left: {x_pos}%; top: 50%;">
-    <b style="font-size:12px;">{row['장치장']}</b>
-    <span>{row['곡종']}</span>
-    <div style="border-top:1px solid #fff; width:60%; margin:3px 0;"></div>
-    <b>{row['재고량']:.1f}</b>
-</div>
-"""
+# 그리드 배경 생성 (14개의 사각형)
+grid_html = '<div class="grid-container">'
+for _ in range(14):
+    grid_html += '<div class="grid-item"></div>'
 
-# 데이터 매핑 로직
+# 데이터 처리 로직
 df = None
 if uploaded_file:
-    df = pd.read_excel(uploaded_file)
+    try:
+        df = pd.read_excel(uploaded_file)
+    except Exception as e:
+        st.error(f"파일 읽기 오류: {e}")
 
+# 교차점에 원형 노드 배치
 for i, x_pos in enumerate(node_positions):
-    # 데이터가 있고, 해당 인덱스의 행이 존재하는 경우 실데이터 출력
-    if df is not None and i < len(df):
-        row = df.iloc[i]
-        grid_html += f"""
-        <div class="node" style="left: {x_pos}%; top: 50%;">
-            <b style="font-size:12px;">{row['장치장']}</b>
-            <span>{row['곡종']}</span>
-            <div style="border-top:1px solid #fff; width:60%; margin:3px 0;"></div>
-            <b>{row['재
+    # 데이터가 존재하고 해당 행이 있는 경우
+    if df is not None and i
